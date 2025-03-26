@@ -7,23 +7,29 @@ import { Button } from "@mui/material";
 const TotoItemInputField = (props) => {
   const [input, setInput] = useState();
 
-  const onSubmit = ()=>{
+  const onSubmit = () => {
     props.onSubmit(input);
     setInput("");
-  }
+  };
 
   return (
     <div>
       <TextField id="todo-item-input" label="todo Item" variant="outlined" onChange={(e) => setInput(e.target.value)} value={input} />
-      <Button variant="outlined" onClick={onSubmit}>submit</Button>
+      <Button variant="outlined" onClick={onSubmit}>
+        submit
+      </Button>
     </div>
   );
+};
+const TotoItemLIst = (props) => {
+  return <div></div>;
 };
 function App() {
   return (
     <div className="App">
       {/* TotoItemInputField/버튼 눌렀을때  onSubmit callback 콜해주기  */}
-      <TotoItemInputField onSubmit={()=>{}}/> 
+      <TotoItemInputField onSubmit={() => {}} />
+      <TotoItemLIst />
     </div>
   );
 }
