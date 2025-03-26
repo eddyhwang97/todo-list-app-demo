@@ -22,8 +22,8 @@ const TotoItemInputField = (props) => {
 function App() {
   return (
     <div className="App">
-      <TotoItemInputField onSubmit={()=>{}}/>
-        <h1> 하이</h1>
+      {/* TotoItemInputField/버튼 눌렀을때  onSubmit callback 콜해주기  */}
+      <TotoItemInputField onSubmit={()=>{}}/> 
     </div>
   );
 }
