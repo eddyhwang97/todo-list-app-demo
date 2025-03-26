@@ -23,6 +23,7 @@ function App() {
   return (
     <div className="App">
       <TotoItemInputField onSubmit={()=>{}}/>
+        <h1> 하이</h1>
     </div>
   );
 }
