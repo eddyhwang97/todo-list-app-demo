@@ -31,18 +31,28 @@ const TotoItemInputField = (props) => {
 
 // TodoItem : 등록된 아이템 li>span
 const TodoItem = (props) => {
+  // style적용 : isFinished 상태면 strikethrough 적용
   const style = props.todoItem.isFinished ? { textDecoration: "line-through" } : {};
-  console.log(props);
   return (
     <li>
       <span
         style={style}
         onClick={() => {
+          // TodoItem 클릭시 onTodoItemClick에 todoItem 객체 정보 보냄
           props.onTodoItemClick(props.todoItem);
         }}
       >
         {props.todoItem.todoItemContent}
       </span>
+      <Button
+        variant="outlined"
+        // 클릭시 onRemoveClick 함수로 삭제할 아이템 전송
+        onClick={() => {
+          props.onRemoveClick(props.todoItem);
+        }}
+      >
+        Remove
+      </Button>
     </li>
   );
 };
@@ -52,7 +62,17 @@ const TotoItemLIst = (props) => {
   // todoItemList배열 map으로 리턴
   const todoList = props.todoItemList.map((todoItem, index) => {
     // 등록된 아이템
-    return <TodoItem key={index} todoItem={todoItem} onTodoItemClick={props.onTodoItemClick} />;
+    return (
+      <TodoItem
+        key={index}
+        // 아이템
+        todoItem={todoItem}
+        // strikethrough함수
+        onTodoItemClick={props.onTodoItemClick}
+        // 완료아이템 삭제함수
+        onRemoveClick={props.onRemoveClick}
+      />
+    );
   });
   return (
     <div>
@@ -79,18 +99,31 @@ function App() {
     ]);
   };
 
+  // onTodoItemClick : 완료된 리스트 strikeThrough 하는 함수
   const onTodoItemClick = (clickedTodoItem) => {
+    //span클릭시 날라온 객체정보
     settodoItemList(
       todoItemList.map((todoItem) => {
         if (clickedTodoItem.id === todoItem.id) {
+          //완료된 아이템 클릭시 isFinished 상태 바꿈 false -> true
           return {
             id: clickedTodoItem.id,
             todoItemContent: clickedTodoItem.todoItemContent,
             isFinished: !clickedTodoItem.isFinished,
           };
         } else {
+          // 다르면 그래로 냅둠
           return todoItem;
         }
+      })
+    );
+  };
+
+  // onRemoveClick : 완료된 아이템 삭제함수
+  const onRemoveClick = (removeTodoItem) => {
+    settodoItemList(
+      todoItemList.filter((todoItem) => {
+        return todoItem.id !== removeTodoItem.id;
       })
     );
   };
@@ -99,7 +132,13 @@ function App() {
     <div className="App">
       <TotoItemInputField onSubmit={onSubmit} />
       {/* TodoItemList 컴포넌트 props 로 등록된 Todo 아이템들 받기  */}
-      <TotoItemLIst todoItemList={todoItemList} onTodoItemClick={onTodoItemClick} />
+      <TotoItemLIst
+        // 화면에 출력될 리스트 props
+        todoItemList={todoItemList}
+        // onTodoItemClick : 완료된 리스트 strikeThrough 하는 함수
+        onTodoItemClick={onTodoItemClick}
+        onRemoveClick={onRemoveClick}
+      />
     </div>
   );
 }
