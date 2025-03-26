@@ -9,7 +9,7 @@ import { Button } from "@mui/material";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, setDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, setDoc, doc,deleteDoc } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -160,7 +160,11 @@ function App() {
   };
 
   // onRemoveClick : 완료된 아이템 삭제함수
-  const onRemoveClick = (removeTodoItem) => {
+  const onRemoveClick = async(removeTodoItem) => {
+    // Todo 아이템 삭제할때 Firestore 에서도 지우기 
+
+    const todoItemRef = doc(db,"todoItem",removeTodoItem.id);
+    await deleteDoc(todoItemRef);
     settodoItemList(
       todoItemList.filter((todoItem) => {
         return todoItem.id !== removeTodoItem.id;
