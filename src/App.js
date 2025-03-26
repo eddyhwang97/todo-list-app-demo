@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 
@@ -9,7 +9,7 @@ import { Button } from "@mui/material";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, setDoc, doc,deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, QuerySnapshot } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -115,10 +115,26 @@ function App() {
   // Todo아이템들 state로 관리
   const [todoItemList, settodoItemList] = useState([]);
 
+  // 앱 처음 켜졌을때 Todo 아이템 읽어오기
+  useEffect(() => {
+    getDocs(collection(db, "todoItem")).then((querySnapshot) => {
+      const firestoreTodoItemList = [];
+      querySnapshot.forEach(() => {
+        firestoreTodoItemList.push({
+          id: doc.id,
+          todoItemContent: doc.data().todoItemContent,
+          isFinished: doc.data().isFinished,
+        });
+      });
+      // firestoreTodoItemList : firestore에서 불러온 Todo아이템들
+      settodoItemList(firestoreTodoItemList);
+    });
+    // 렌더링시 한번
+  },[]);
+
   // onSubmit :  새로운 Todo 저장
   // Todo 아이템 버튼 눌릴때 스테이트에 추가하는 callback function 만들어서 props로 넘겨줌
   const onSubmit = async (newTodoItem) => {
-    
     // 새로운 Todo 아이템이 생겼을 때 Firestore 에 저장하기
     const docRef = await addDoc(collection(db, "todoItem"), {
       todoItemContent: newTodoItem,
@@ -160,10 +176,10 @@ function App() {
   };
 
   // onRemoveClick : 완료된 아이템 삭제함수
-  const onRemoveClick = async(removeTodoItem) => {
-    // Todo 아이템 삭제할때 Firestore 에서도 지우기 
+  const onRemoveClick = async (removeTodoItem) => {
+    // Todo 아이템 삭제할때 Firestore 에서도 지우기
 
-    const todoItemRef = doc(db,"todoItem",removeTodoItem.id);
+    const todoItemRef = doc(db, "todoItem", removeTodoItem.id);
     await deleteDoc(todoItemRef);
     settodoItemList(
       todoItemList.filter((todoItem) => {
