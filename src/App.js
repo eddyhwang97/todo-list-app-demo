@@ -9,7 +9,7 @@ import { Button } from "@mui/material";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore,collection,addDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, setDoc, doc } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -22,18 +22,18 @@ const firebaseConfig = {
   storageBucket: "todo-list-app-demo-15ca2.firebasestorage.app",
   messagingSenderId: "1031929234392",
   appId: "1:1031929234392:web:25eed06c7bfb0847b528ad",
-  measurementId: "G-RWS8HYV97C"
+  measurementId: "G-RWS8HYV97C",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-
 // ======================== firebase ===============================
 // =================================================================
 
-const db = getFirestore(app)
+// firebase 에서 불러온 데이터
+const db = getFirestore(app);
 
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
 const TotoItemInputField = (props) => {
@@ -115,15 +115,16 @@ function App() {
   // Todo아이템들 state로 관리
   const [todoItemList, settodoItemList] = useState([]);
 
+  // onSubmit :  새로운 Todo 저장
   // Todo 아이템 버튼 눌릴때 스테이트에 추가하는 callback function 만들어서 props로 넘겨줌
-  const onSubmit = (newTodoItem) => {
-    // db 
-    const onSubmit = async (newTodoItem)=>{
-      const docRef = await addDoc(collection(db, "todoItem"),{
-        todoItemContent: newTodoItem,
-        isFinished: false,
-      })
-    }
+  const onSubmit = async (newTodoItem) => {
+    
+    // 새로운 Todo 아이템이 생겼을 때 Firestore 에 저장하기
+    const docRef = await addDoc(collection(db, "todoItem"), {
+      todoItemContent: newTodoItem,
+      isFinished: false,
+    });
+
     // newTodoItem은 TotoItemInputField에서 온 input값
     settodoItemList([
       ...todoItemList,
@@ -136,7 +137,10 @@ function App() {
   };
 
   // onTodoItemClick : 완료된 리스트 strikeThrough 하는 함수
-  const onTodoItemClick = (clickedTodoItem) => {
+  const onTodoItemClick = async (clickedTodoItem) => {
+    // todoItemRef : db 내 todoItem clickedTodoItem.id 값과 일치한느 데이터
+    const todoItemRef = doc(db, "todoItem", clickedTodoItem.id);
+    await setDoc(todoItemRef, { isFinished: !clickedTodoItem, isFinished }, { merge: true });
     //span클릭시 날라온 객체정보
     settodoItemList(
       todoItemList.map((todoItem) => {
