@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy, where } from "firebase/firestore";
 import { GoogleAuthProvider, getAuth, signInWithRedirect, onAuthStateChanged, signOut } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -42,8 +42,6 @@ const provider = new GoogleAuthProvider();
 const auth = getAuth(app);
 
 // ======================== firebase ======
-
-
 
 // ============== TotoItemInputField ======
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
@@ -131,12 +129,12 @@ const TodoListAppbar = (props) => {
       color="inherit"
       onClick={() => {
         signInWithRedirect(auth, provider);
-        // auth : firebase 인증 인스턴스, 애플리케이션 인증상태 관리
       }}
     >
-      Login With Google
+      Login with Google
     </Button>
   );
+
   // 로그아웃버튼
   const logoutButton = (
     <Button
@@ -148,6 +146,7 @@ const TodoListAppbar = (props) => {
       Log out
     </Button>
   );
+
   const button = props.currentUser === null ? loginWithGoogleButton : logoutButton;
 
   return (
@@ -172,9 +171,13 @@ function App() {
   // Firebase Authentication에서 제공하는 메서드
   // 사용자의 인증 상태가 변경될 때마다 호출되는 콜백 함수를 등록하는 데 사용
   onAuthStateChanged(auth, (user) => {
-    if (user) setCurrentUser(user.uid);
-    else setCurrentUser(null);
+    if (user) {
+      setCurrentUser(user.uid);
+    } else {
+      setCurrentUser(null);
+    }
   });
+
   // syncTodoItemListStateWithFirestore : 서버에서 item 가져오기
   const syncTodoItemListStateWithFirestore = () => {
     const q = query(collection(db, "todoItem"), orderBy("createdTime", "desc")); //추가
@@ -190,6 +193,7 @@ function App() {
           isFinished: doc.data().isFinished,
           // item stamptime
           createdTime: doc.data().createdTime ?? 0,
+          userId: doc.data().userId,
           //createdTime이 null,undifined면 return 0
         });
       });
@@ -201,7 +205,7 @@ function App() {
   useEffect(() => {
     syncTodoItemListStateWithFirestore();
     // 렌더링시 한번
-  }, []);
+  }, [currentUser]);
 
   // onSubmit :  새로운 Todo 저장
   // -> Todo 아이템 버튼 눌릴때 스테이트에 추가하는 callback function 만들어서 props로 넘겨줌
@@ -211,6 +215,7 @@ function App() {
       todoItemContent: newTodoItem,
       isFinished: false,
       createdTime: Math.floor(Date.now() / 1000),
+      userId: currentUser,
     });
 
     // 추가된 item 다시 가져와서 셋팅
