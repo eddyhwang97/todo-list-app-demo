@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy, where } from "firebase/firestore";
-import { GoogleAuthProvider, getAuth, signInWithRedirect, onAuthStateChanged, signOut } from "firebase/auth";
+import { GoogleAuthProvider, getAuth, signInWithRedirect,signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -122,13 +122,13 @@ const TotoItemLIst = (props) => {
 };
 
 // ============== TodoListAppbar ============
-const TodoListAppbar = (props) => {
+const TodoListAppBar = (props) => {
   // 구글 로그인버튼
   const loginWithGoogleButton = (
     <Button
       color="inherit"
       onClick={() => {
-        signInWithRedirect(auth, provider);
+        signInWithPopup(auth, provider);
       }}
     >
       Login with Google
@@ -166,7 +166,7 @@ function App() {
   // 로그인 상태변수
   const [currentUser, setCurrentUser] = useState(null);
   // Todo아이템들 state로 관리
-  const [todoItemList, settodoItemList] = useState([]);
+  const [todoItemList, setTodoItemList] = useState([]);
 
   // Firebase Authentication에서 제공하는 메서드
   // 사용자의 인증 상태가 변경될 때마다 호출되는 콜백 함수를 등록하는 데 사용
@@ -180,7 +180,8 @@ function App() {
 
   // syncTodoItemListStateWithFirestore : 서버에서 item 가져오기
   const syncTodoItemListStateWithFirestore = () => {
-    const q = query(collection(db, "todoItem"), orderBy("createdTime", "desc")); //추가
+    const q = query(collection(db, "todoItem"), where("userId", "==", currentUser), orderBy("createdTime", "desc")); //추가
+
     getDocs(q).then((querySnapshot) => {
       const firestoreTodoItemList = [];
       querySnapshot.forEach((doc) => {
@@ -193,14 +194,16 @@ function App() {
           isFinished: doc.data().isFinished,
           // item stamptime
           createdTime: doc.data().createdTime ?? 0,
+          // userId
           userId: doc.data().userId,
           //createdTime이 null,undifined면 return 0
         });
       });
       // firestoreTodoItemList : firestore에서 불러온 Todo아이템들
-      settodoItemList(firestoreTodoItemList);
+      setTodoItemList(firestoreTodoItemList);
     });
   };
+
   // 렌더링시 처음 켜졌을때 Todo item 읽어오기
   useEffect(() => {
     syncTodoItemListStateWithFirestore();
@@ -244,7 +247,7 @@ function App() {
 
   return (
     <div className="App">
-      <TodoListAppbar currentUser={currentUser} />
+      <TodoListAppBar currentUser={currentUser} />
       <TotoItemInputField onSubmit={onSubmit} />
       {/* TodoItemList 컴포넌트 props 로 등록된 Todo 아이템들 받기  */}
       <TotoItemLIst
@@ -259,3 +262,6 @@ function App() {
 }
 
 export default App;
+
+
+
