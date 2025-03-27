@@ -9,7 +9,8 @@ import { Button } from "@mui/material";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, QuerySnapshot } from "firebase/firestore";
+import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy } from "firebase/firestore";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -30,13 +31,11 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
 // ======================== firebase ======
-// ========================================
 
 // firebase 에서 불러온 데이터
 const db = getFirestore(app);
 
 // ============== TotoItemInputField ======
-// ========================================
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
 const TotoItemInputField = (props) => {
   // textField에 입력도니 todo state로 관리
@@ -60,10 +59,8 @@ const TotoItemInputField = (props) => {
   );
 };
 // ============== TotoItemInputField ======
-// ========================================
 
 // ============== TodoItem ================
-// ========================================
 // TodoItem : 등록된 아이템 li>span
 const TodoItem = (props) => {
   // style적용 : isFinished 상태면 strikethrough 적용
@@ -92,10 +89,8 @@ const TodoItem = (props) => {
   );
 };
 // ============== TodoItem ================
-// ========================================
 
 // ============== TotoItemLIst ============
-// ========================================
 // TotoItemLIst :  등록된 아이템 보여줄 컴퍼넌트 div>ul
 const TotoItemLIst = (props) => {
   // todoItemList배열 map으로 리턴
@@ -120,7 +115,6 @@ const TotoItemLIst = (props) => {
   );
 };
 // ============== TotoItemLIst ============
-// ========================================
 
 // app 컴포넌트
 function App() {
@@ -129,7 +123,9 @@ function App() {
 
   // syncTodoItemListStateWithFirestore : 서버에서 item 가져오기
   const syncTodoItemListStateWithFirestore = () => {
-    getDocs(collection(db, "todoItem")).then((querySnapshot) => {
+    const q = query(collection(db, "todoItem"), 
+    orderBy("createdTime", "desc")); //추가
+    getDocs(q).then((querySnapshot) => {
       const firestoreTodoItemList = [];
       querySnapshot.forEach((doc) => {
         firestoreTodoItemList.push({
@@ -140,7 +136,8 @@ function App() {
           // item state
           isFinished: doc.data().isFinished,
           // item stamptime
-          createdTime: doc.data().createdTime ?? 0,
+          createdTime: doc.data().createdTime ?? 0, 
+          //createdTime이 null,undifined면 return 0
         });
       });
       // firestoreTodoItemList : firestore에서 불러온 Todo아이템들
