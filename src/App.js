@@ -1,8 +1,11 @@
 import "./App.css";
-
 import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+
 
 // ======================== firebase ======
 // ========================================
@@ -10,6 +13,8 @@ import { Button } from "@mui/material";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy } from "firebase/firestore";
+
+
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -116,6 +121,20 @@ const TotoItemLIst = (props) => {
 };
 // ============== TotoItemLIst ============
 
+const TodoListAppbar = (props)=>{
+  return(
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6" component="div" sx={{flexGrow:1}}>
+          Todo List App
+        </Typography>
+        <Button color="inherit">Log In</Button>
+      </Toolbar>
+    </AppBar>
+  )
+}
+
+
 // app 컴포넌트
 function App() {
   // Todo아이템들 state로 관리
@@ -186,6 +205,7 @@ function App() {
 
   return (
     <div className="App">
+      <TodoListAppbar/>
       <TotoItemInputField onSubmit={onSubmit} />
       {/* TodoItemList 컴포넌트 props 로 등록된 Todo 아이템들 받기  */}
       <TotoItemLIst
