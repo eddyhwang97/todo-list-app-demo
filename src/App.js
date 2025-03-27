@@ -133,9 +133,14 @@ function App() {
       const firestoreTodoItemList = [];
       querySnapshot.forEach((doc) => {
         firestoreTodoItemList.push({
+          // item id
           id: doc.id,
+          // item content
           todoItemContent: doc.data().todoItemContent,
+          // item state
           isFinished: doc.data().isFinished,
+          // item stamptime
+          createdTime: doc.data().createdTime ?? 0,
         });
       });
       // firestoreTodoItemList : firestore에서 불러온 Todo아이템들
@@ -155,6 +160,7 @@ function App() {
     await addDoc(collection(db, "todoItem"), {
       todoItemContent: newTodoItem,
       isFinished: false,
+      createdTime: Math.floor(Date.now() / 1000),
     });
 
     // 추가된 item 다시 가져와서 셋팅
