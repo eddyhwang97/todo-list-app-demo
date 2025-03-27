@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 
-// ======================== firebase ===============================
-// =================================================================
+// ======================== firebase ======
+// ========================================
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -29,12 +29,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-// ======================== firebase ===============================
-// =================================================================
+// ======================== firebase ======
+// ========================================
 
 // firebase 에서 불러온 데이터
 const db = getFirestore(app);
 
+// ============== TotoItemInputField ======
+// ========================================
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
 const TotoItemInputField = (props) => {
   // textField에 입력도니 todo state로 관리
@@ -57,7 +59,11 @@ const TotoItemInputField = (props) => {
     </div>
   );
 };
+// ============== TotoItemInputField ======
+// ========================================
 
+// ============== TodoItem ================
+// ========================================
 // TodoItem : 등록된 아이템 li>span
 const TodoItem = (props) => {
   // style적용 : isFinished 상태면 strikethrough 적용
@@ -85,7 +91,11 @@ const TodoItem = (props) => {
     </li>
   );
 };
+// ============== TodoItem ================
+// ========================================
 
+// ============== TotoItemLIst ============
+// ========================================
 // TotoItemLIst :  등록된 아이템 보여줄 컴퍼넌트 div>ul
 const TotoItemLIst = (props) => {
   // todoItemList배열 map으로 리턴
@@ -109,17 +119,19 @@ const TotoItemLIst = (props) => {
     </div>
   );
 };
+// ============== TotoItemLIst ============
+// ========================================
 
 // app 컴포넌트
 function App() {
   // Todo아이템들 state로 관리
   const [todoItemList, settodoItemList] = useState([]);
 
-  // 앱 처음 켜졌을때 Todo 아이템 읽어오기
-  useEffect(() => {
+  // syncTodoItemListStateWithFirestore : 서버에서 item 가져오기
+  const syncTodoItemListStateWithFirestore = () => {
     getDocs(collection(db, "todoItem")).then((querySnapshot) => {
       const firestoreTodoItemList = [];
-      querySnapshot.forEach(() => {
+      querySnapshot.forEach((doc) => {
         firestoreTodoItemList.push({
           id: doc.id,
           todoItemContent: doc.data().todoItemContent,
@@ -129,63 +141,44 @@ function App() {
       // firestoreTodoItemList : firestore에서 불러온 Todo아이템들
       settodoItemList(firestoreTodoItemList);
     });
+  };
+  // 렌더링시 처음 켜졌을때 Todo item 읽어오기
+  useEffect(() => {
+    syncTodoItemListStateWithFirestore();
     // 렌더링시 한번
-  },[]);
+  }, []);
 
   // onSubmit :  새로운 Todo 저장
-  // Todo 아이템 버튼 눌릴때 스테이트에 추가하는 callback function 만들어서 props로 넘겨줌
+  // -> Todo 아이템 버튼 눌릴때 스테이트에 추가하는 callback function 만들어서 props로 넘겨줌
   const onSubmit = async (newTodoItem) => {
     // 새로운 Todo 아이템이 생겼을 때 Firestore 에 저장하기
-    const docRef = await addDoc(collection(db, "todoItem"), {
+    await addDoc(collection(db, "todoItem"), {
       todoItemContent: newTodoItem,
       isFinished: false,
     });
 
-    // newTodoItem은 TotoItemInputField에서 온 input값
-    settodoItemList([
-      ...todoItemList,
-      {
-        id: docRef.id,
-        todoItemContent: newTodoItem,
-        isFinished: false,
-      },
-    ]);
+    // 추가된 item 다시 가져와서 셋팅
+    syncTodoItemListStateWithFirestore();
   };
 
   // onTodoItemClick : 완료된 리스트 strikeThrough 하는 함수
+  // -> isFinished 값 변경으로 토글기능
   const onTodoItemClick = async (clickedTodoItem) => {
     // todoItemRef : db 내 todoItem clickedTodoItem.id 값과 일치한느 데이터
     const todoItemRef = doc(db, "todoItem", clickedTodoItem.id);
-    await setDoc(todoItemRef, { isFinished: !clickedTodoItem, isFinished }, { merge: true });
-    //span클릭시 날라온 객체정보
-    settodoItemList(
-      todoItemList.map((todoItem) => {
-        if (clickedTodoItem.id === todoItem.id) {
-          //완료된 아이템 클릭시 isFinished 상태 바꿈 false -> true
-          return {
-            id: clickedTodoItem.id,
-            todoItemContent: clickedTodoItem.todoItemContent,
-            isFinished: !clickedTodoItem.isFinished,
-          };
-        } else {
-          // 다르면 그래로 냅둠
-          return todoItem;
-        }
-      })
-    );
+    await setDoc(todoItemRef, { isFinished: !clickedTodoItem.isFinished }, { merge: true });
+
+    // 완료 처리하면 item 상태 변경 후 재 셋팅
+    syncTodoItemListStateWithFirestore();
   };
 
   // onRemoveClick : 완료된 아이템 삭제함수
   const onRemoveClick = async (removeTodoItem) => {
     // Todo 아이템 삭제할때 Firestore 에서도 지우기
-
     const todoItemRef = doc(db, "todoItem", removeTodoItem.id);
     await deleteDoc(todoItemRef);
-    settodoItemList(
-      todoItemList.filter((todoItem) => {
-        return todoItem.id !== removeTodoItem.id;
-      })
-    );
+    // 아이템 삭제 후 데이터 다시 가져오기
+    syncTodoItemListStateWithFirestore();
   };
 
   return (
