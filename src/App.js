@@ -2,10 +2,9 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 
 // ======================== firebase ======
 // ========================================
@@ -13,8 +12,7 @@ import Typography from '@mui/material/Typography';
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy } from "firebase/firestore";
-
-
+import { GoogleAuthProvider, getAuth, signInWithRedirect, onAuthStateChanged, signOut } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -32,13 +30,20 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+// 제공된 설정객체 firebaseConfig 를 사용해 Firebase 애플리케이션 초기화
+// initializeApp 함수는 Firebase SDK의 일부로, API 키, 프로젝트 ID 등과 같은 설정으로 애플리케이션을 초기화하는 데 사용
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+// firebase 에서 불러온 데이터
+const db = getFirestore(app);
+
+// provider: 인증 제공자 인스턴스입니다
+const provider = new GoogleAuthProvider();
+const auth = getAuth(app);
 
 // ======================== firebase ======
 
-// firebase 에서 불러온 데이터
-const db = getFirestore(app);
+
 
 // ============== TotoItemInputField ======
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
@@ -63,7 +68,6 @@ const TotoItemInputField = (props) => {
     </div>
   );
 };
-// ============== TotoItemInputField ======
 
 // ============== TodoItem ================
 // TodoItem : 등록된 아이템 li>span
@@ -93,7 +97,6 @@ const TodoItem = (props) => {
     </li>
   );
 };
-// ============== TodoItem ================
 
 // ============== TotoItemLIst ============
 // TotoItemLIst :  등록된 아이템 보여줄 컴퍼넌트 div>ul
@@ -119,31 +122,62 @@ const TotoItemLIst = (props) => {
     </div>
   );
 };
-// ============== TotoItemLIst ============
 
-const TodoListAppbar = (props)=>{
-  return(
+// ============== TodoListAppbar ============
+const TodoListAppbar = (props) => {
+  // 구글 로그인버튼
+  const loginWithGoogleButton = (
+    <Button
+      color="inherit"
+      onClick={() => {
+        signInWithRedirect(auth, provider);
+        // auth : firebase 인증 인스턴스, 애플리케이션 인증상태 관리
+      }}
+    >
+      Login With Google
+    </Button>
+  );
+  // 로그아웃버튼
+  const logoutButton = (
+    <Button
+      color="inherit"
+      onClick={() => {
+        signOut(auth);
+      }}
+    >
+      Log out
+    </Button>
+  );
+  const button = props.currentUser === null ? loginWithGoogleButton : logoutButton;
+
+  return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{flexGrow:1}}>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Todo List App
         </Typography>
-        <Button color="inherit">Log In</Button>
+        {button}
       </Toolbar>
     </AppBar>
-  )
-}
-
+  );
+};
 
 // app 컴포넌트
 function App() {
+  // 로그인 상태변수
+  const [currentUser, setCurrentUser] = useState(null);
   // Todo아이템들 state로 관리
   const [todoItemList, settodoItemList] = useState([]);
 
+  // Firebase Authentication에서 제공하는 메서드
+  // 사용자의 인증 상태가 변경될 때마다 호출되는 콜백 함수를 등록하는 데 사용
+  onAuthStateChanged(auth, (user) => {
+    if (user) setCurrentUser(user.uid);
+    else setCurrentUser(null);
+  });
   // syncTodoItemListStateWithFirestore : 서버에서 item 가져오기
   const syncTodoItemListStateWithFirestore = () => {
-    const q = query(collection(db, "todoItem"), 
-    orderBy("createdTime", "desc")); //추가
+    const q = query(collection(db, "todoItem"), orderBy("createdTime", "desc")); //추가
     getDocs(q).then((querySnapshot) => {
       const firestoreTodoItemList = [];
       querySnapshot.forEach((doc) => {
@@ -155,7 +189,7 @@ function App() {
           // item state
           isFinished: doc.data().isFinished,
           // item stamptime
-          createdTime: doc.data().createdTime ?? 0, 
+          createdTime: doc.data().createdTime ?? 0,
           //createdTime이 null,undifined면 return 0
         });
       });
@@ -205,7 +239,7 @@ function App() {
 
   return (
     <div className="App">
-      <TodoListAppbar/>
+      <TodoListAppbar currentUser={currentUser} />
       <TotoItemInputField onSubmit={onSubmit} />
       {/* TodoItemList 컴포넌트 props 로 등록된 Todo 아이템들 받기  */}
       <TotoItemLIst
