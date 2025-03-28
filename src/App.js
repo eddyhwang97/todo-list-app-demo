@@ -5,6 +5,17 @@ import { Button } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Stack from "@mui/material/Stack";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import IconButton from "@mui/material/IconButton";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Checkbox from "@mui/material/Checkbox";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 // ======================== firebase ======
 // ========================================
@@ -12,7 +23,7 @@ import Typography from "@mui/material/Typography";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy, where } from "firebase/firestore";
-import { GoogleAuthProvider, getAuth, signInWithRedirect,signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { GoogleAuthProvider, getAuth, signInWithRedirect, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -45,7 +56,7 @@ const auth = getAuth(app);
 
 // ============== TotoItemInputField ======
 // TotoItemInputField :  Todo아이템 입력할 컴포넌트
-const TotoItemInputField = (props) => {
+const TodoItemInputField = (props) => {
   // textField에 입력도니 todo state로 관리
   const [input, setInput] = useState("");
 
@@ -57,13 +68,14 @@ const TotoItemInputField = (props) => {
   };
 
   return (
-    <div>
-      <TextField id="todo-item-input" label="todo Item" variant="outlined" onChange={(e) => setInput(e.target.value)} value={input} />
-      {/* 버튼 눌렀을때  onSubmit callback 콜해주기  */}
-      <Button variant="outlined" onClick={onSubmit}>
-        submit
-      </Button>
-    </div>
+    <Box sx={{ margin: "auto" }}>
+      <Stack direction="row" spacing={2} justifyContent="center">
+        <TextField id="todo-item-input" label="Todo Item" variant="outlined" onChange={(e) => setInput(e.target.value)} value={input} />
+        <Button variant="outlined" onClick={onSubmit}>
+          Submit
+        </Button>
+      </Stack>
+    </Box>
   );
 };
 
@@ -73,32 +85,26 @@ const TodoItem = (props) => {
   // style적용 : isFinished 상태면 strikethrough 적용
   const style = props.todoItem.isFinished ? { textDecoration: "line-through" } : {};
   return (
-    <li>
-      <span
-        style={style}
-        onClick={() => {
-          // TodoItem 클릭시 onTodoItemClick에 todoItem 객체 정보 보냄
-          props.onTodoItemClick(props.todoItem);
-        }}
-      >
-        {props.todoItem.todoItemContent}
-      </span>
-      <Button
-        variant="outlined"
-        // 클릭시 onRemoveClick 함수로 삭제할 아이템 전송
-        onClick={() => {
-          props.onRemoveClick(props.todoItem);
-        }}
-      >
-        Remove
-      </Button>
-    </li>
+    <ListItem
+      secondaryAction={
+        <IconButton edge="end" aria-label="comments" onClick={() => props.onRemoveClick(props.todoItem)}>
+          <DeleteIcon />
+        </IconButton>
+      }
+    >
+      <ListItemButton role={undefined} onClick={() => props.onTodoItemClick(props.todoItem)} dense>
+        <ListItemIcon>
+          <Checkbox edge="start" checked={props.todoItem.isFinished} disableRipple />
+        </ListItemIcon>
+        <ListItemText style={style} primary={props.todoItem.todoItemContent} />
+      </ListItemButton>
+    </ListItem>
   );
 };
 
 // ============== TotoItemLIst ============
 // TotoItemLIst :  등록된 아이템 보여줄 컴퍼넌트 div>ul
-const TotoItemLIst = (props) => {
+const TodoItemList = (props) => {
   // todoItemList배열 map으로 리턴
   const todoList = props.todoItemList.map((todoItem, index) => {
     // 등록된 아이템
@@ -115,9 +121,9 @@ const TotoItemLIst = (props) => {
     );
   });
   return (
-    <div>
-      <ul>{todoList}</ul>
-    </div>
+    <Box>
+      <List sx={{ margin: "auto", maxWidth: 720 }}>{todoList}</List>
+    </Box>
   );
 };
 
@@ -151,10 +157,11 @@ const TodoListAppBar = (props) => {
 
   return (
     <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      <Toolbar sx={{ width: "100%", maxWidth: 720, margin: "auto" }}>
+        <Typography variant="h6" component="div">
           Todo List App
         </Typography>
+        <Box sx={{ flexGrow: 1 }} />
         {button}
       </Toolbar>
     </AppBar>
@@ -248,20 +255,12 @@ function App() {
   return (
     <div className="App">
       <TodoListAppBar currentUser={currentUser} />
-      <TotoItemInputField onSubmit={onSubmit} />
-      {/* TodoItemList 컴포넌트 props 로 등록된 Todo 아이템들 받기  */}
-      <TotoItemLIst
-        // 화면에 출력될 리스트 props
-        todoItemList={todoItemList}
-        // onTodoItemClick : 완료된 리스트 strikeThrough 하는 함수
-        onTodoItemClick={onTodoItemClick}
-        onRemoveClick={onRemoveClick}
-      />
+      <Container sx={{ paddingTop: 3 }}>
+        <TodoItemInputField onSubmit={onSubmit} />
+        <TodoItemList todoItemList={todoItemList} onTodoItemClick={onTodoItemClick} onRemoveClick={onRemoveClick} />
+      </Container>
     </div>
   );
 }
 
 export default App;
-
-
-
